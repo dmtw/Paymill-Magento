@@ -7,65 +7,65 @@ require_once 'lib/Zend/Log/Writer/Stream.php';
 class Paymill_Paymillcc_Model_PaymentMethod extends Mage_Payment_Model_Method_Cc
 {
     /**
-    * unique internal payment method identifier
-    *
-    * @var string [a-z0-9_]
-    */
+     * unique internal payment method identifier
+     *
+     * @var string [a-z0-9_]
+     */
     protected $_code = 'paymillcc';
- 
-    protected $_formBlockType = 'paymillcc/form_paymill'; 
+
+    protected $_formBlockType = 'paymillcc/form_paymill';
     protected $_infoBlockType = 'paymillcc/info_paymill';
 
     /**
      * Is this payment method a gateway (online auth/charge) ?
      */
-    protected $_isGateway               = true;
- 
+    protected $_isGateway = true;
+
     /**
      * Can authorize online?
      */
-    protected $_canAuthorize            = true;
- 
+    protected $_canAuthorize = true;
+
     /**
      * Can capture funds online?
      */
-    protected $_canCapture              = true;
- 
+    protected $_canCapture = true;
+
     /**
      * Can capture partial amounts online?
      */
-    protected $_canCapturePartial       = false;
- 
+    protected $_canCapturePartial = false;
+
     /**
      * Can refund online?
      */
-    protected $_canRefund               = false;
- 
+    protected $_canRefund = false;
+
     /**
      * Can void transactions online?
      */
-    protected $_canVoid                 = true;
- 
+    protected $_canVoid = true;
+
     /**
      * Can use this payment method in administration panel?
      */
-    protected $_canUseInternal          = true;
- 
+    protected $_canUseInternal = true;
+
     /**
      * Can show this payment method as an option on checkout payment page?
      */
-    protected $_canUseCheckout          = true;
- 
+    protected $_canUseCheckout = true;
+
     /**
      * Is this payment method suitable for multi-shipping checkout?
      */
-    protected $_canUseForMultishipping  = true;
- 
+    protected $_canUseForMultishipping = true;
+
     /**
      * Can save credit card information for future processing?
      */
     protected $_canSaveCc = false;
- 
+
     /**
      * Here you will need to implement authorize, capture and void public methods
      *
@@ -74,17 +74,17 @@ class Paymill_Paymillcc_Model_PaymentMethod extends Mage_Payment_Model_Method_Cc
      */
     public function assignData($data)
     {
-         
+
         if (!($data instanceof Varien_Object)) {
             $data = new Varien_Object($data);
         }
 
         $info = $this->getInfoInstance();
-         
+
         // read the paymill_transaction_token from the credit 
         // card form and store it for later use
         $info->setAdditionalInformation(
-            "paymill_transaction_token", 
+            "paymill_transaction_token",
             $data->paymill_transaction_token
         );
         return $this;
@@ -102,26 +102,26 @@ class Paymill_Paymillcc_Model_PaymentMethod extends Mage_Payment_Model_Method_Cc
         }
         return $this;
     }
-    
+
     /**
      * This method is triggered after order is placed.
      * It is responsible for storing the paymill transaction token
      * into the order and use it later when the invoice is created.
-     */ 
+     */
     public function authorize(Varien_Object $payment, $amount)
     {
 
         // get configuration variables
         $paymillCapturePaymentPoint = Mage::getStoreConfig(
-            'payment/paymillcc/paymill_capture_point', 
+            'payment/paymillcc/paymill_capture_point',
             Mage::app()->getStore()
         );
 
         $info = $this->getInfoInstance();
-         
+
         // retrieve the transaction_token and save it for later processing
         $token = $info->getAdditionalInformation("paymill_transaction_token");
-        
+
         // save token fpr later processing
         $payment->cc_trans_id = $token;
 
@@ -131,7 +131,7 @@ class Paymill_Paymillcc_Model_PaymentMethod extends Mage_Payment_Model_Method_Cc
 
         return $this;
     }
-     
+
     /**
      * This method triggers the payment.
      * It is triggered when the invoice is created.
@@ -140,9 +140,9 @@ class Paymill_Paymillcc_Model_PaymentMethod extends Mage_Payment_Model_Method_Cc
     {
         // get configuration variables
         $paymillCapturePaymentPoint = Mage::getStoreConfig(
-            'payment/paymillcc/paymill_capture_point', 
+            'payment/paymillcc/paymill_capture_point',
             Mage::app()->getStore()
-        ); 
+        );
 
         if ($paymillCapturePaymentPoint == "invoice") {
             $this->_capturePayment($payment, $amount);
@@ -152,7 +152,8 @@ class Paymill_Paymillcc_Model_PaymentMethod extends Mage_Payment_Model_Method_Cc
     /**
      * Specify currency support
      */
-    public function canUseForCurrency($currency) {
+    public function canUseForCurrency($currency)
+    {
         if (!in_array($currency, array('EUR'))) {
             return false;
         }
@@ -163,23 +164,32 @@ class Paymill_Paymillcc_Model_PaymentMethod extends Mage_Payment_Model_Method_Cc
      * Specify minimum order amount from config
      */
     const XML_CUSTOMER_GROUP_CONFIG_FIELD = 'available_for_customer_groups';
-    public function isAvailable($quote = null) {
+
+    public function isAvailable($quote = null)
+    {
+
+        // is active
+        $paymillActive = Mage::getStoreConfig(
+            'payment/paymillcc/active',
+            Mage::app()->getStore()
+        );
+
+        if (!$paymillActive) {
+            return false;
+        }
 
 
-
+        //begin DMTW Customer Group Filter
         /* @var $customer Mage_Customer_Model_Customer */
         $customer = Mage::helper('customer')->getCustomer();
-        // is active
         //Mage::Log($customer->getGroupId());
-
         $customerGroupConfig = Mage::getStoreConfig(
             'payment/paymillcc/available_for_customer_groups',
             Mage::app()->getStore()
         );
 
-        //begin GMK
-// don't restrict access to shipping methods for admin orders!
-        if (Mage::getSingleton('admin/session')->isLoggedIn()) {  //Dont restrict admin
+        // don't restrict access to shipping methods for admin orders!
+        if (Mage::getSingleton('admin/session')->isLoggedIn()) { //Dont restrict admin
             //  return array();
             //return true;
         } else {
@@ -187,34 +197,28 @@ class Paymill_Paymillcc_Model_PaymentMethod extends Mage_Payment_Model_Method_Cc
                 $methodCustomerGroups = explode(',', $customerGroupConfig);
                 if (count($methodCustomerGroups) > 0) {
                     if (!in_array($customer->getGroupId(), $methodCustomerGroups)) {
-                       // $result->isAvailable = false;
+                        // $result->isAvailable = false;
                         Mage::Log("False Customer Group");
                         return false;
+                    } else {
+                        Mage::Log("Right Customer Group");
                     }
-                    else{Mage::Log("Right Customer Group");}
                 }
             }
         }
-        $paymillActive = Mage::getStoreConfig(
-            'payment/paymillcc/active', 
-            Mage::app()->getStore()
-        ); 
-
-        if (!$paymillActive) {
-            return false;
-        }
+        //end DMTW Customer Group Filter
 
         // get minimum order amount
         $paymillMinimumOrderAmount = Mage::getStoreConfig(
-            'payment/paymillcc/paymill_minimum_order_amount', 
+            'payment/paymillcc/paymill_minimum_order_amount',
             Mage::app()->getStore()
-        ); 
+        );
 
-        if($quote && $quote->getBaseGrandTotal() <= 0.5) {
+        if ($quote && $quote->getBaseGrandTotal() <= 0.5) {
             return false;
         }
 
-        if($quote && $quote->getBaseGrandTotal() <= $paymillMinimumOrderAmount) {
+        if ($quote && $quote->getBaseGrandTotal() <= $paymillMinimumOrderAmount) {
             return false;
         }
 
@@ -232,11 +236,11 @@ class Paymill_Paymillcc_Model_PaymentMethod extends Mage_Payment_Model_Method_Cc
 
         // get configuration variables
         $paymillPrivateApiKey = Mage::getStoreConfig(
-            'payment/paymillcc/paymill_private_api_key', 
+            'payment/paymillcc/paymill_private_api_key',
             Mage::app()->getStore()
         );
         $paymillApiEndpoint = Mage::getStoreConfig(
-            'payment/paymillcc/paymill_api_endpoint', 
+            'payment/paymillcc/paymill_api_endpoint',
             Mage::app()->getStore()
         );
 
@@ -261,8 +265,8 @@ class Paymill_Paymillcc_Model_PaymentMethod extends Mage_Payment_Model_Method_Cc
         $transactionParams = array(
             'amount' => $amount * 100,
             'currency' => strtolower($payment->getOrder()->getOrderCurrency()->getCode()),
-            'description' => 
-                Mage::getStoreConfig('design/head/default_title') 
+            'description' =>
+            Mage::getStoreConfig('design/head/default_title')
                 . ': ' . sprintf('#%s, %s', $order->getIncrementId(), $order->getCustomerEmail())
         );
 
@@ -309,7 +313,8 @@ class Paymill_Paymillcc_Model_PaymentMethod extends Mage_Payment_Model_Method_Cc
         } catch (Services_Paymill_Exception $ex) {
             Mage::Log("An error occured while processing the payment (Paymill): " . $ex->getMessage());
             Mage::throwException(Mage::helper('paymillcc')->__('Your payment was not processed. Please try again later. Error:') . ' ' . $ex->getMessage());
-        }  
+        }
     }
 }
+
 ?>
