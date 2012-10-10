@@ -161,10 +161,40 @@ class Paymill_Paymillcc_Model_PaymentMethod extends Mage_Payment_Model_Method_Cc
 
     /**
      * Specify minimum order amount from config
-     */ 
+     */
+    const XML_CUSTOMER_GROUP_CONFIG_FIELD = 'available_for_customer_groups';
     public function isAvailable($quote = null) {
 
+
+
+        /* @var $customer Mage_Customer_Model_Customer */
+        $customer = Mage::helper('customer')->getCustomer();
         // is active
+        //Mage::Log($customer->getGroupId());
+
+        $customerGroupConfig = Mage::getStoreConfig(
+            'payment/paymillcc/available_for_customer_groups',
+            Mage::app()->getStore()
+        );
+
+        //begin GMK
+// don't restrict access to shipping methods for admin orders!
+        if (Mage::getSingleton('admin/session')->isLoggedIn()) {  //Dont restrict admin
+            //  return array();
+            //return true;
+        } else {
+            if (!empty($customerGroupConfig)) {
+                $methodCustomerGroups = explode(',', $customerGroupConfig);
+                if (count($methodCustomerGroups) > 0) {
+                    if (!in_array($customer->getGroupId(), $methodCustomerGroups)) {
+                       // $result->isAvailable = false;
+                        Mage::Log("False Customer Group");
+                        return false;
+                    }
+                    else{Mage::Log("Right Customer Group");}
+                }
+            }
+        }
         $paymillActive = Mage::getStoreConfig(
             'payment/paymillcc/active', 
             Mage::app()->getStore()
