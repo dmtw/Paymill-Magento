@@ -198,10 +198,10 @@ class Paymill_Paymillcc_Model_PaymentMethod extends Mage_Payment_Model_Method_Cc
                 if (count($methodCustomerGroups) > 0) {
                     if (!in_array($customer->getGroupId(), $methodCustomerGroups)) {
                         // $result->isAvailable = false;
-                        Mage::Log("False Customer Group");
+                        //Mage::Log("False Customer Group");
                         return false;
                     } else {
-                        Mage::Log("Right Customer Group");
+                        //Mage::Log("Right Customer Group");
                     }
                 }
             }

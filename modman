@@ -1,0 +1,9 @@
+#**** Paymillcc ***********
+app/code/community/Paymill/	app/code/community/Paymill/
+app/design/frontend/base/default/template/paymill/ app/design/frontend/base/default/template/paymill/
+app/locale/de_DE/Paymill_Paymillcc.csv	app/locale/de_DE/Paymill_Paymillcc.csv
+app/locale/en_US/Paymill_Paymillcc.csv	app/locale/en_US/Paymill_Paymillcc.csv
+lib/Services/Paymill/ lib/Services/Paymill/
+app/etc/modules/Paymill_Paymillcc.xml app/etc/modules/Paymill_Paymillcc.xml
+#****end Paymill_Paymillcc
+
