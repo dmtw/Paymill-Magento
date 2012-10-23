@@ -1,8 +1,8 @@
 <?php
 // require this here due to a Magento bug
-require_once 'lib/Zend/Log.php';
+/*require_once 'lib/Zend/Log.php';
 require_once 'lib/Zend/Log/Formatter/Simple.php';
-require_once 'lib/Zend/Log/Writer/Stream.php';
+require_once 'lib/Zend/Log/Writer/Stream.php';*/
 
 class Paymill_Paymillcc_Model_PaymentMethod extends Mage_Payment_Model_Method_Cc
 {
